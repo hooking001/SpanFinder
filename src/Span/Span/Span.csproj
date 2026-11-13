@@ -7,11 +7,17 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <!-- Release ReadyToRun restore needs a concrete runtime, not only RuntimeIdentifiers. -->
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'x64'">win-x64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'x86'">win-x86</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(Platform)' == 'ARM64'">win-arm64</RuntimeIdentifier>
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <Nullable>enable</Nullable>
+    <!-- JIT builds support field-based observables. Retain the AOT migration advisory for AOT builds. -->
+    <NoWarn Condition="'$(PublishAot)' != 'true'">$(NoWarn);MVVMTK0045</NoWarn>
     <ImplicitUsings>enable</ImplicitUsings>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <!-- Sentry release 정확도 — Package.appxmanifest와 동기화 필요 (수동) -->
@@ -63,6 +69,7 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup><Content Include="Assets\Terminal\**\*" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
   <!-- Onboarding assets — WebView2가 virtual host로 로드 -->
   <ItemGroup>
     <Content Include="Assets\Onboarding\**\*">
@@ -136,9 +143,7 @@
 
        경로: net8.0-windows10.0.19041.0/win-$(platform)/ (self-contained는 RID 서브폴더에 생성됨).
        .pdb는 패키지 크기 절감 차원에서 제외. -->
-  <Target Name="IncludeThumbsInPackage"
-          BeforeTargets="AssignTargetPaths;GetCopyToOutputDirectoryItems"
-          DependsOnTargets="ResolveProjectReferences">
+  <Target Name="IncludeThumbsInPackage" BeforeTargets="AssignTargetPaths;GetCopyToOutputDirectoryItems" DependsOnTargets="ResolveProjectReferences">
     <PropertyGroup>
       <_ThumbsRid Condition="'$(Platform)' == 'x64'">win-x64</_ThumbsRid>
       <_ThumbsRid Condition="'$(Platform)' == 'x86'">win-x86</_ThumbsRid>
@@ -148,22 +153,20 @@
     <ItemGroup Condition="Exists('$(_ThumbsBinDir)Span.Thumbs.exe')">
       <!-- Span.Thumbs self-contained 전체를 'Span.Thumbs/' 서브디렉토리로 포함 (pdb 제외) -->
       <_ThumbsAllFiles Include="$(_ThumbsBinDir)**\*.*" Exclude="$(_ThumbsBinDir)**\*.pdb" />
-      <Content Include="@(_ThumbsAllFiles)"
-               Link="Span.Thumbs\%(RecursiveDir)%(Filename)%(Extension)"
-               CopyToOutputDirectory="Always"
-               Visible="false" />
+      <Content Include="@(_ThumbsAllFiles)" Link="Span.Thumbs\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="Always" Visible="false" />
     </ItemGroup>
   </Target>
 
   <ItemGroup>
     <PackageReference Include="ColorCode.WinUI" Version="2.0.15" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.2.251219" />
+    <PackageReference Include="EasyWindowsTerminalControl.WinUI" Version="1.0.20-beta.1" />
     <PackageReference Include="FluentFTP" Version="53.0.2" />
     <PackageReference Include="H.NotifyIcon.WinUI" Version="2.2.0" />
 <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260209005" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.2" />
-    <PackageReference Include="SSH.NET" Version="2025.1.0" />
+    <PackageReference Include="SSH.NET" Version="2026.0.0" />
     <PackageReference Include="Sentry" Version="6.1.0" />
     <!-- ZIP 압축 해제 시 CRC32 검증용. 직접 구현한 table-driven CRC는 445 MB/s로
          추출 처리량을 반토막 내지만 이 패키지는 18 GB/s(실측)라 영향이 없다. -->
@@ -173,11 +176,12 @@
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
   </PropertyGroup>
-  <!-- Self-signed cert for sideload/GitHub. Store re-signs on submission. -->
+  <!-- Local builds are unsigned by default. Opt in with -p:AppxPackageSigningEnabled=true
+       and supply your own certificate when generating a sideload package. -->
   <PropertyGroup>
-    <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
-    <PackageCertificateKeyFile>SpanFinder_Dev.pfx</PackageCertificateKeyFile>
-    <PackageCertificatePassword>SpanDev2026</PackageCertificatePassword>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <PackageCertificateKeyFile Condition="'$(AppxPackageSigningEnabled)' == 'true'">SpanFinder_Dev.pfx</PackageCertificateKeyFile>
+    <PackageCertificatePassword Condition="'$(AppxPackageSigningEnabled)' == 'true'">SpanDev2026</PackageCertificatePassword>
   </PropertyGroup>
   <PropertyGroup>
     <PublishReadyToRun Condition="'$(Configuration)' == 'Debug'">False</PublishReadyToRun>
@@ -186,11 +190,15 @@
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">False</PublishTrimmed>
   </PropertyGroup>
 
-  <!-- Auto-generate BuildInfo.g.cs with build date -->
+  <ItemGroup>
+    <Compile Remove="BuildInfo.g.cs" />
+  </ItemGroup>
+
+  <!-- Auto-generate BuildInfo.g.cs in obj so SDK globs cannot include it twice. -->
   <Target Name="_GenerateBuildInfo" BeforeTargets="BeforeCompile;CoreCompile;_GenerateCompileInputs" AfterTargets="_CheckForNETCoreSdkIsPreview">
     <PropertyGroup>
       <_BuildDate>$([System.DateTime]::UtcNow.ToString("yyyyMMdd"))</_BuildDate>
-      <_BuildInfoPath>$(ProjectDir)BuildInfo.g.cs</_BuildInfoPath>
+      <_BuildInfoPath>$(IntermediateOutputPath)BuildInfo.g.cs</_BuildInfoPath>
     </PropertyGroup>
     <WriteLinesToFile File="$(_BuildInfoPath)" Lines="namespace Span%3B;internal static class BuildInfo;{;    public const string BuildDate = &quot;$(_BuildDate)&quot;%3B;}" Overwrite="true" />
     <ItemGroup>

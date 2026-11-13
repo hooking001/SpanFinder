@@ -11,7 +11,7 @@ namespace Span.Services;
 /// </summary>
 public class SettingsService : ISettingsService
 {
-    private readonly ApplicationDataContainer _localSettings;
+    private readonly ApplicationDataContainer? _localSettings;
 
     public event Action<string, object?>? SettingChanged;
 
@@ -80,14 +80,14 @@ public class SettingsService : ISettingsService
     {
         try
         {
-            if (_localSettings.Values.TryGetValue(key, out var value) && value is T typed)
+            if (_localSettings != null && _localSettings.Values.TryGetValue(key, out var value) && value is T typed)
                 return typed;
         }
         catch (Exception ex)
         {
             Helpers.DebugLogger.Log($"[SettingsService] Error reading '{key}': {ex.Message}");
             // Remove corrupted key
-            try { _localSettings.Values.Remove(key); } catch { }
+            try { _localSettings?.Values.Remove(key); } catch { }
         }
         return defaultValue;
     }
@@ -96,6 +96,7 @@ public class SettingsService : ISettingsService
     {
         try
         {
+            if (_localSettings == null) return;
             var old = _localSettings.Values.ContainsKey(key) ? _localSettings.Values[key] : null;
             _localSettings.Values[key] = value;
 

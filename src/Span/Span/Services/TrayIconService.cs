@@ -237,7 +237,8 @@ namespace Span.Services
             public RelayCommand(Action<object?> execute) => _execute = execute;
             public bool CanExecute(object? parameter) => true;
             public void Execute(object? parameter) => _execute(parameter);
-            public event EventHandler? CanExecuteChanged;
+            // CanExecute is always true.
+            public event EventHandler? CanExecuteChanged { add { } remove { } }
         }
     }
 }

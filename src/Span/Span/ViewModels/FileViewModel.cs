@@ -150,7 +150,7 @@ namespace Span.ViewModels
         /// </summary>
         public override string IconGlyph => Services.IconService.Current?.GetIcon(((FileItem)_model).FileType) ?? "\uECE0";
 
-        public override Microsoft.UI.Xaml.Media.Brush IconBrush => Services.IconService.Current?.GetBrush(((FileItem)_model).FileType);
+        public override Microsoft.UI.Xaml.Media.Brush IconBrush => Services.IconService.Current?.GetBrush(((FileItem)_model).FileType) ?? base.IconBrush;
 
         private bool IsImageFile => _imageExtensions.Contains(System.IO.Path.GetExtension(Name));
         private bool IsVideoFile => _videoExtensions.Contains(System.IO.Path.GetExtension(Name));

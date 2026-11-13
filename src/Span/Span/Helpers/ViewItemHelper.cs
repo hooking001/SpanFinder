@@ -39,7 +39,7 @@ namespace Span.Helpers
                 {
                     if (ArchivePathHelper.IsArchivePath(file.Path))
                     {
-                        MainWindow.OpenArchiveEntryStaticAsync(file.Path);
+                        _ = OpenArchiveEntryAsync(file.Path, viewName);
                         DebugLogger.Log($"[{viewName}] Extracting archive entry {file.Name}");
                     }
                     else if (file.Path.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
@@ -72,6 +72,11 @@ namespace Span.Helpers
             }
         }
 
+        private static async System.Threading.Tasks.Task OpenArchiveEntryAsync(string path, string viewName)
+        {
+            try { await MainWindow.OpenArchiveEntryStaticAsync(path); }
+            catch (Exception ex) { DebugLogger.Log($"[{viewName}] Error opening archive entry: {ex.Message}"); }
+        }
         /// <summary>
         /// Returns true if Ctrl or Alt modifier is currently held down.
         /// Used to skip view-level key handling when global shortcuts should take precedence.

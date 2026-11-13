@@ -49,6 +49,8 @@
     <Compile Include="..\Span\Models\SearchQuery.cs" Link="Sources\Models\SearchQuery.cs" />
     <Compile Include="..\Span\Models\ActionLogEntry.cs" Link="Sources\Models\ActionLogEntry.cs" />
     <!-- Helpers (pure C#) -->
+    <Compile Include="..\Span\Helpers\WindowsTerminalSettings.cs" Link="Sources\Helpers\WindowsTerminalSettings.cs" />
+    <Compile Include="..\Span\Helpers\RelayCommand.cs" Link="Sources\Helpers\RelayCommand.cs" />
     <Compile Include="..\Span\Helpers\NaturalStringComparer.cs" Link="Sources\Helpers\NaturalStringComparer.cs" />
     <Compile Include="..\Span\Helpers\ViewModeExtensions.cs" Link="Sources\Helpers\ViewModeExtensions.cs" />
     <Compile Include="..\Span\Helpers\SearchQueryParser.cs" Link="Sources\Helpers\SearchQueryParser.cs" />

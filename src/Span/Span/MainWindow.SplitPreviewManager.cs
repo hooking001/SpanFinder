@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
@@ -426,6 +426,7 @@ namespace Span
 
         private void ToggleSplitView()
         {
+            if (_embeddedTerminal != null) { CloseTerminalPane(); return; }
             if (ViewModel.IsRecycleBinTab) return;
             ViewModel.IsSplitViewEnabled = !ViewModel.IsSplitViewEnabled;
 

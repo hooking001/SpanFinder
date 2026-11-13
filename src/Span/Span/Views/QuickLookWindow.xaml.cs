@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -883,7 +883,7 @@ namespace Span.Views
                         break;
 
                     case "openTerminal":
-                        _shellService?.OpenTerminal(path);
+                        ActionForwarded?.Invoke(action, path);
                         shouldClose = true;
                         break;
 

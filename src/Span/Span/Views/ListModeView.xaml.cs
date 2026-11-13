@@ -644,7 +644,7 @@ namespace Span.Views
             }
         }
 
-        private void OnItemDoubleClick(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
+        private async void OnItemDoubleClick(object sender, Microsoft.UI.Xaml.Input.DoubleTappedRoutedEventArgs e)
         {
             if (_justFinishedRename) { _justFinishedRename = false; return; }
 
@@ -667,7 +667,7 @@ namespace Span.Views
                 try
                 {
                     if (Helpers.ArchivePathHelper.IsArchivePath(file.Path))
-                        MainWindow.OpenArchiveEntryStaticAsync(file.Path);
+                        await MainWindow.OpenArchiveEntryStaticAsync(file.Path);
                     else
                     {
                         var shellService = App.Current.Services.GetRequiredService<Services.ShellService>();
@@ -771,7 +771,7 @@ namespace Span.Views
             }
         }
 
-        private void HandleEnter()
+        private async void HandleEnter()
         {
             if (_justFinishedRename) { _justFinishedRename = false; return; }
 
@@ -794,7 +794,7 @@ namespace Span.Views
                 try
                 {
                     if (Helpers.ArchivePathHelper.IsArchivePath(file.Path))
-                        MainWindow.OpenArchiveEntryStaticAsync(file.Path);
+                        await MainWindow.OpenArchiveEntryStaticAsync(file.Path);
                     else
                     {
                         var shellService = App.Current.Services.GetRequiredService<Services.ShellService>();
@@ -845,7 +845,7 @@ namespace Span.Views
             var selectedIndices = new HashSet<int>();
             foreach (var item in ListGridView.SelectedItems)
             {
-                int idx = allItems.IndexOf(item as FileSystemViewModel);
+                int idx = item is FileSystemViewModel viewModel ? allItems.IndexOf(viewModel) : -1;
                 if (idx >= 0) selectedIndices.Add(idx);
             }
             _isSyncingSelection = true;

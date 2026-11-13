@@ -32,6 +32,7 @@ public partial class LocalizationService
     private static readonly Lazy<Dictionary<string, string>> _en = new(() =>
     {
         var dict = new Dictionary<string, string>();
+        if (Entries == null) return dict;
         foreach (var e in Entries)
             dict[e.key] = e.en;
         return dict;

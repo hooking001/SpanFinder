@@ -622,8 +622,7 @@ namespace Span
             ListView.ViewModel = ViewModel.Explorer;
             IconView.ViewModel = ViewModel.Explorer;
             HomeView.MainViewModel = ViewModel;
-            SettingsView.BackRequested += (s, e) => CloseCurrentSettingsTab();
-            LogView.BackRequested += (s, e) => CloseCurrentActionLogTab();
+            Closed += (_, _) => CloseTerminalPane();
 
             // AddressBarControl에 PathSegments/CurrentPath 바인딩
             SyncAddressBarControls(ViewModel.Explorer);
@@ -1017,7 +1016,7 @@ namespace Span
                             {
                                 // shell:/CLSID 가상 폴더 → explorer.exe 위임 후 이 창 닫기
                             }
-                            else if (selectMode && TryNavigateAndSelectAtStartup(jumpArg))
+                            else if (selectMode && TryNavigateAndSelectAtStartup(jumpArg ?? string.Empty))
                             {
                                 // --select: 부모 폴더를 열고 항목 선택. 폴더 항목도 안으로 들어가지 않는다
                                 // (아래 Directory.Exists 분기보다 먼저 봐야 한다).
@@ -1039,7 +1038,7 @@ namespace Span
                             {
                                 // 파일 경로 → 부모 폴더 열고 파일 선택
                                 Helpers.DebugLogger.Log($"[Startup] File argument: {jumpArg}");
-                                TryNavigateAndSelectAtStartup(jumpArg);
+                                TryNavigateAndSelectAtStartup(jumpArg ?? string.Empty);
                             }
                         }
                     }
@@ -1419,7 +1418,7 @@ namespace Span
                     SaveWindowPlacement();
 
                 // Save tab state for session restore (skip for tear-off windows)
-                if (!_isTearOffWindow)
+                if (!_isTearOffWindow && ViewModel != null)
                 {
                     ViewModel.SaveActiveTabState();
                     ViewModel.SaveTabsToSettings();
@@ -1531,7 +1530,7 @@ namespace Span
                 try
                 {
                     FavoritesTreeView.RootNodes.Clear();
-                    ViewModel.Favorites.CollectionChanged -= OnFavoritesCollectionChanged;
+                    if (ViewModel != null) ViewModel.Favorites.CollectionChanged -= OnFavoritesCollectionChanged;
                 }
                 catch { /* ignore */ }
 
@@ -1744,7 +1743,7 @@ namespace Span
             // Column slide-in animation: only for Add when not the root column,
             // and only when this is a genuine depth change (not a Replace cycle).
             if (e.Action == NotifyCollectionChangedAction.Add &&
-                ViewModel.LeftExplorer.Columns.Count > 1 &&
+                ViewModel.LeftExplorer?.Columns.Count > 1 &&
                 !isReplacingLeft)
             {
                 Helpers.DebugLogger.Log($"[OnColumnsChanged] PrepareAndAnimateNewColumn for left");
@@ -1804,7 +1803,7 @@ namespace Span
 
             // Column slide-in animation for right pane (skip during Replace cycle)
             if (e.Action == NotifyCollectionChangedAction.Add &&
-                ViewModel.RightExplorer.Columns.Count > 1 &&
+                ViewModel.RightExplorer?.Columns.Count > 1 &&
                 !isReplacingRight)
             {
                 Helpers.DebugLogger.Log($"[OnRightColumnsChanged] PrepareAndAnimateNewColumn for right");
@@ -2058,7 +2057,7 @@ namespace Span
                 leftScrollViewer = panel.scroller;
             else
                 leftScrollViewer = MillerScrollViewer;
-            if (sender != leftScrollViewer) return;
+            if (!ReferenceEquals(sender, leftScrollViewer)) return;
 
             // 초기 표시(탭 전환/뷰모드 전환/앱 시작: Collapsed→Visible, 이전 폭 0):
             // 기존 동작 그대로 마지막 컬럼 정렬 — 아래 가드의 "확대 스킵"에 걸리면 안 됨.
@@ -2548,6 +2547,7 @@ namespace Span
         private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (_isClosed) return;
+            if (e.PropertyName == nameof(MainViewModel.ActiveTab)) CloseTerminalPane();
             if (e.PropertyName == nameof(MainViewModel.CurrentViewMode))
             {
                 // 탭 전환 중이거나 UpdateViewModeVisibility 내부에서는 FocusActiveView 억제
@@ -3053,7 +3053,7 @@ namespace Span
                 {
                     HomeAddressIcon.Visibility = Visibility.Collapsed;
                     RecycleBinAddressIcon.Visibility = Visibility.Collapsed;
-                    MainAddressBar.PathSegments = explorer?.PathSegments;
+                    MainAddressBar.PathSegments = explorer?.PathSegments ?? new();
                     MainAddressBar.CurrentPath = explorer?.CurrentPath ?? string.Empty;
                     SearchBox.PlaceholderText = _loc.Get("SearchPlaceholderWithHint");
                 }
@@ -5698,7 +5698,7 @@ namespace Span
         /// 지정된 UI 요소가 부모 요소의 하위에 있는지 확인한다.
         /// Left/Right Pane 구분에 사용된다.
         /// </summary>
-        private static bool IsDescendant(DependencyObject parent, DependencyObject child)
+        private static bool IsDescendant(DependencyObject parent, DependencyObject? child)
         {
             var current = child;
             while (current != null)
@@ -7243,9 +7243,7 @@ namespace Span
         void Services.IContextMenuHost.PerformOpenTerminal(string folderPath)
         {
             if (string.IsNullOrEmpty(folderPath) || !System.IO.Directory.Exists(folderPath)) return;
-            var shellService = App.Current.Services.GetRequiredService<Services.ShellService>();
-            var settings = App.Current.Services.GetRequiredService<Services.SettingsService>();
-            shellService.OpenTerminal(folderPath, settings.DefaultTerminal);
+            OpenTerminalPane(folderPath);
         }
 
         /// <summary>

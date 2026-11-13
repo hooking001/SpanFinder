@@ -10,18 +10,18 @@ namespace Span
     /// </summary>
     public class FileSystemItemTemplateSelector : DataTemplateSelector
     {
-        public DataTemplate FolderTemplate { get; set; }
-        public DataTemplate FileTemplate { get; set; }
+        public DataTemplate? FolderTemplate { get; set; }
+        public DataTemplate? FileTemplate { get; set; }
 
         protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
         {
             if (item is Span.ViewModels.FolderViewModel)
             {
-                return FolderTemplate;
+                return FolderTemplate ?? base.SelectTemplateCore(item, container);
             }
             else if (item is Span.ViewModels.FileViewModel)
             {
-                return FileTemplate;
+                return FileTemplate ?? base.SelectTemplateCore(item, container);
             }
 
             return base.SelectTemplateCore(item, container);

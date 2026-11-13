@@ -17,7 +17,7 @@ namespace Span.Helpers
             {
                 if (value is FolderItem || value is Span.ViewModels.FolderViewModel)
                 {
-                    return Application.Current.Resources["Icon_Folder"] as string;
+                    return Application.Current.Resources["Icon_Folder"] as string ?? "\uECE0";
                 }
                 else if (value is FileItem file)
                 {
@@ -32,7 +32,7 @@ namespace Span.Helpers
                     return GetIconForFile(fileName);
                 }
 
-                return Application.Current.Resources["Icon_File_Default"] as string;
+                return Application.Current.Resources["Icon_File_Default"] as string ?? "\uECE0";
             }
             catch
             {
@@ -63,9 +63,9 @@ namespace Span.Helpers
 
                 if (Application.Current.Resources.TryGetValue(resourceKey, out object resource))
                 {
-                    return resource as string;
+                    return resource as string ?? "\uECE0";
                 }
-                return Application.Current.Resources["Icon_File_Default"] as string;
+                return Application.Current.Resources["Icon_File_Default"] as string ?? "\uECE0";
             }
             catch
             {

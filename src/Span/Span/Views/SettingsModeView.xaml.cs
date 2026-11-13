@@ -45,12 +45,7 @@ public sealed partial class SettingsModeView : UserControl
     private Dictionary<string, List<string>>? _savedBindings;    // 마지막 저장 상태
     private bool _shortcutsLoaded;
     private string? _recordingCommandId;
-    private ContentDialog? _recordingDialog;
 
-    /// <summary>
-    /// 뒤로가기 요청 이벤트 (MainWindow에서 구독)
-    /// </summary>
-    public event EventHandler? BackRequested;
 
     public SettingsModeView()
     {
@@ -1375,7 +1370,7 @@ public sealed partial class SettingsModeView : UserControl
             _recordingCommandId = commandId;
 
             // 해당 행의 keysPanel 찾기 (버튼의 부모)
-            var keysPanel = btn.Parent as StackPanel;
+            var keysPanel = btn?.Parent as StackPanel;
             if (keysPanel == null) return;
             _recordingRowPanel = keysPanel;
 
@@ -1670,158 +1665,9 @@ public sealed partial class SettingsModeView : UserControl
         if (ShortcutsCancelBtn != null) ShortcutsCancelBtn.IsEnabled = hasChanges;
     }
 
-    // ── Key recording dialog ──
-
-    private StackPanel CreateKeyRecorderContent(string commandId)
-    {
-        var panel = new StackPanel { Spacing = 12 };
-
-        panel.Children.Add(new TextBlock
-        {
-            Text = string.Format(
-                _loc?.Get("Settings_ShortcutsRecordPrompt") ?? "'{0}'의 새 단축키를 입력하세요",
-                Models.ShortcutCommands.GetDisplayName(commandId)),
-            TextWrapping = TextWrapping.Wrap
-        });
-
-        var keyDisplay = new TextBlock
-        {
-            Text = _loc?.Get("Settings_ShortcutsPressKey") ?? "키를 누르세요...",
-            FontFamily = new FontFamily("Consolas"),
-            FontSize = 16,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            Foreground = GetAccentBrush(),
-            Margin = new Thickness(0, 8, 0, 8)
-        };
-        panel.Children.Add(keyDisplay);
-
-        var warningText = new TextBlock
-        {
-            Text = "",
-            Foreground = new SolidColorBrush(Microsoft.UI.Colors.Orange),
-            FontSize = 12,
-            TextWrapping = TextWrapping.Wrap,
-            Visibility = Visibility.Collapsed
-        };
-        panel.Children.Add(warningText);
-
-        // 키 입력 캡처용 투명 TextBox
-        var recorder = new TextBox
-        {
-            Width = 0,
-            Height = 0,
-            Opacity = 0,
-            IsReadOnly = true
-        };
-        recorder.PreviewKeyDown += (s, e) =>
-        {
-            e.Handled = true;
-            HandleKeyRecording(e, keyDisplay, warningText);
-        };
-        panel.Children.Add(recorder);
-
-        // 다이얼로그 열릴 때 포커스
-        panel.Loaded += (s, e) => recorder.Focus(FocusState.Programmatic);
-
-        return panel;
-    }
-
-    private void HandleKeyRecording(KeyRoutedEventArgs e, TextBlock display, TextBlock warning)
-    {
-        if (e.Key == Windows.System.VirtualKey.Escape)
-        {
-            _recordingDialog?.Hide();
-            return;
-        }
-
-        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control)
-                   .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-        var shift = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift)
-                    .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-        var alt = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Menu)
-                  .HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
-
-        // 수식키만 누른 경우 무시
-        if (e.Key is Windows.System.VirtualKey.Control or Windows.System.VirtualKey.Shift
-            or Windows.System.VirtualKey.Menu or Windows.System.VirtualKey.LeftControl
-            or Windows.System.VirtualKey.RightControl or Windows.System.VirtualKey.LeftShift
-            or Windows.System.VirtualKey.RightShift or Windows.System.VirtualKey.LeftMenu
-            or Windows.System.VirtualKey.RightMenu)
-            return;
-
-        var keyString = Services.KeyBindingService.BuildKeyString(ctrl, shift, alt, e.Key);
-        display.Text = keyString;
-
-        // 시스템 예약 키 체크
-        if (_keyBindingService!.IsSystemReserved(keyString))
-        {
-            warning.Text = string.Format(
-                _loc?.Get("Settings_ShortcutsSystemReserved") ?? "'{0}'는 시스템 예약 키입니다.",
-                keyString);
-            warning.Visibility = Visibility.Visible;
-            return;
-        }
-
-        // 구조적 키 체크
-        if (_keyBindingService.IsStructuralKey(keyString))
-        {
-            warning.Text = string.Format(
-                _loc?.Get("Settings_ShortcutsStructural") ?? "'{0}'는 탐색 필수 키이므로 변경할 수 없습니다.",
-                keyString);
-            warning.Visibility = Visibility.Visible;
-            return;
-        }
-
-        // 충돌 검사
-        var conflict = _keyBindingService.CheckConflict(keyString, _recordingCommandId!, _editingBindings!);
-        if (conflict.Type == Services.ConflictType.AlreadyAssigned)
-        {
-            warning.Text = string.Format(
-                _loc?.Get("Settings_ShortcutsConflict") ??
-                "'{0}'는 현재 '{1}'에 할당되어 있습니다.\n교체하면 기존 바인딩이 제거됩니다.",
-                keyString, conflict.ExistingCommandName);
-            warning.Visibility = Visibility.Visible;
-
-            // 다이얼로그 PrimaryButton을 "교체"로 변경
-            if (_recordingDialog != null)
-            {
-                _recordingDialog.PrimaryButtonText = _loc?.Get("Replace") ?? "교체";
-                // 기존 핸들러 제거 후 새로 등록 (중복 방지)
-                _recordingDialog.PrimaryButtonClick -= OnRecordingReplace;
-                _recordingDialog.PrimaryButtonClick += OnRecordingReplace;
-                // 교체 시 사용할 정보 저장
-                _pendingReplaceKey = keyString;
-                _pendingReplaceConflictCommandId = conflict.ExistingCommandId;
-            }
-            return;
-        }
-
-        // 충돌 없음 — 기존 키를 교체 (추가가 아닌 교체)
-        _editingBindings![_recordingCommandId!] = new List<string> { keyString };
-
-        _recordingDialog?.Hide();
-        RebuildShortcutItemsUI();
-    }
-
+    // Pending conflict replacement for the inline shortcut recorder.
     private string? _pendingReplaceKey;
     private string? _pendingReplaceConflictCommandId;
-
-    private void OnRecordingReplace(ContentDialog sender, ContentDialogButtonClickEventArgs args)
-    {
-        if (_pendingReplaceKey == null || _editingBindings == null || _recordingCommandId == null) return;
-
-        // 기존 바인딩에서 해당 키 제거
-        if (_pendingReplaceConflictCommandId != null && _editingBindings.ContainsKey(_pendingReplaceConflictCommandId))
-            _editingBindings[_pendingReplaceConflictCommandId].Remove(_pendingReplaceKey);
-
-        // 새 바인딩으로 교체 (추가가 아닌 교체)
-        _editingBindings[_recordingCommandId] = new List<string> { _pendingReplaceKey };
-
-        _pendingReplaceKey = null;
-        _pendingReplaceConflictCommandId = null;
-
-        RebuildShortcutItemsUI();
-    }
 
     // ── Default File Manager handlers ──
 
@@ -2075,21 +1921,21 @@ public sealed partial class SettingsModeView : UserControl
                 case Windows.Services.Store.StorePurchaseStatus.Succeeded:
                 case Windows.Services.Store.StorePurchaseStatus.AlreadyPurchased:
                     await ShowStoreDialogAsync(
-                        _loc.Get("Settings_SupportThanksTitle") ?? "Thank you!",
-                        _loc.Get("Settings_SupportThanksMsg") ?? "Your support means a lot!");
+                        _loc?.Get("Settings_SupportThanksTitle") ?? "Thank you!",
+                        _loc?.Get("Settings_SupportThanksMsg") ?? "Your support means a lot!");
                     break;
                 case Windows.Services.Store.StorePurchaseStatus.NotPurchased:
                     // 사용자가 취소한 경우 — 조용히 무시
                     break;
                 case Windows.Services.Store.StorePurchaseStatus.NetworkError:
                     await ShowStoreDialogAsync(
-                        _loc.Get("Settings_SupportErrorTitle") ?? "Connection Error",
-                        _loc.Get("Settings_SupportNetworkError") ?? "Please check your internet connection and try again.");
+                        _loc?.Get("Settings_SupportErrorTitle") ?? "Connection Error",
+                        _loc?.Get("Settings_SupportNetworkError") ?? "Please check your internet connection and try again.");
                     break;
                 case Windows.Services.Store.StorePurchaseStatus.ServerError:
                     await ShowStoreDialogAsync(
-                        _loc.Get("Settings_SupportErrorTitle") ?? "Error",
-                        _loc.Get("Settings_SupportServerError") ?? "Microsoft Store is temporarily unavailable. Please try again later.");
+                        _loc?.Get("Settings_SupportErrorTitle") ?? "Error",
+                        _loc?.Get("Settings_SupportServerError") ?? "Microsoft Store is temporarily unavailable. Please try again later.");
                     break;
             }
         }
@@ -2097,8 +1943,8 @@ public sealed partial class SettingsModeView : UserControl
         {
             Helpers.DebugLogger.Log($"[Store] Purchase failed: {ex.Message}");
             await ShowStoreDialogAsync(
-                _loc.Get("Settings_SupportErrorTitle") ?? "Error",
-                _loc.Get("Settings_SupportStoreLoginError") ?? "Please sign in to the Microsoft Store and try again.");
+                _loc?.Get("Settings_SupportErrorTitle") ?? "Error",
+                _loc?.Get("Settings_SupportStoreLoginError") ?? "Please sign in to the Microsoft Store and try again.");
         }
     }
 

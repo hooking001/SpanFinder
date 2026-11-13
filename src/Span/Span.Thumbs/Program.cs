@@ -82,7 +82,7 @@ internal static class Program
                     {
                         evt.SetTag("process", "worker");
                         evt.ServerName = null;
-                        evt.User = null;
+                        evt.User = new Sentry.SentryUser();
                         return evt;
                     });
                 });

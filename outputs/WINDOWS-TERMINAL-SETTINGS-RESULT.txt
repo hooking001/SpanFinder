@@ -1,0 +1,37 @@
+Windows Terminal 설정 연동 (2.0.8.5)
+
+설치 갱신 완료. 실제 앱에서 Windows PowerShell 시작 및 초록색 커서, 설정 글꼴 표시를 확인했습니다.
+기존 Windows Terminal 설정 파일은 수정하지 않았습니다.
+
+반영 범위
+- Windows Terminal settings.json의 기본 PowerShell 프로필 선택 및 commandline 그대로 사용 (환경 변수 확장)
+- PowerShell의 정상 프로필 로딩을 유지하며 임의의 -NoProfile/ExecutionPolicy 옵션을 추가하지 않음
+- profiles.defaults와 선택 프로필을 병합. font는 항목별 상속
+- 글꼴/크기/굵기, 색 구성표(내장 및 사용자 정의), 개별 색상, 커서 모양·색상, 스크롤 이력, 여백
+- 로컬 배경 이미지·투명도·늘이기 방식
+- 크기 단위: Windows Terminal의 포인트를 CSS 픽셀로 변환
+- 설정 변경은 터미널 패인을 다시 열면 반영
+- 작업 폴더는 SpanFinder에서 선택한 폴더를 유지
+
+현재 확인된 설정
+Windows PowerShell / JetBrainsMono Nerd Font / Campbell / 커서 #16C60C
+설정된 배경 이미지 C:\Users\user\Desktop\3d-render-bloom-3840x2160-27150.jpg 는 파일이 없어 표시되지 않습니다.
+
+제한
+Windows Terminal 자체의 창 관리·키바인딩·아크릴/셰이더 같은 전용 효과는 WebView2 터미널에 이식하지 않습니다.
+colorScheme의 light/dark 객체가 있으면 현재는 dark 값을 사용합니다.
+원격 URL 배경 이미지 및 Windows Terminal 플러그인의 동적 프로필 생성은 지원하지 않습니다.
+
+검증
+Release MSIX 경고 0 / 오류 0
+단위 테스트 957 통과 / 8 건너뜀 / 실패 0 (총 965)
+설정 상속/프로필 선택/JSONC/색상 매핑 테스트 5개 추가
+설치 버전 2.0.8.5 확인 및 실제 PowerShell 실행/설정된 초록색 커서 확인
+
+구현 근거
+https://learn.microsoft.com/windows/terminal/customize-settings/profile-appearance
+https://learn.microsoft.com/windows/terminal/customize-settings/color-schemes
+https://xtermjs.org/docs/api/terminal/interfaces/iterminaloptions/
+
+실행 확인 스킬
+C:/Users/user/.codex/plugins/cache/openai-bundled/computer-use/26.1106.51428/skills/computer-use/SKILL.md

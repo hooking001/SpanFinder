@@ -1181,7 +1181,8 @@ namespace Span
             int? targetColumnIndex = null;
             ExplorerViewModel? targetExplorer = null;
 
-            if (ViewModel?.ActiveExplorer?.Columns != null)
+            if (ViewModel == null) return;
+            if (ViewModel.ActiveExplorer?.Columns != null)
             {
                 for (int i = 0; i < ViewModel.ActiveExplorer.Columns.Count; i++)
                 {
@@ -1298,7 +1299,8 @@ namespace Span
 
             // Refresh target folder
             int? targetColumnIndex = null;
-            if (ViewModel?.ActiveExplorer?.Columns != null)
+            if (ViewModel == null) return;
+            if (ViewModel.ActiveExplorer?.Columns != null)
             {
                 for (int i = 0; i < ViewModel.ActiveExplorer.Columns.Count; i++)
                 {

@@ -1,3 +1,5 @@
+// Tab restoration deliberately batches backing-field writes; callers update the UI afterward.
+#pragma warning disable MVVMTK0034
 using Microsoft.Extensions.DependencyInjection;
 using Span.Models;
 using Span.Services;
@@ -167,7 +169,7 @@ namespace Span.ViewModels
                     }
                     else if (!string.IsNullOrEmpty(Tabs[index].Path)
                         && Tabs[index].ViewMode != ViewMode.Home
-                        && string.IsNullOrEmpty(Tabs[index].Explorer.CurrentPath))
+                        && string.IsNullOrEmpty(Tabs[index].Explorer?.CurrentPath))
                     {
                         // H4: 비활성 탭에서 지연된 NavigateToPath 실행
                         _ = LoadDeferredTabPathAsync(Tabs[index]);
@@ -823,3 +825,5 @@ namespace Span.ViewModels
         #endregion
     }
 }
+
+#pragma warning restore MVVMTK0034

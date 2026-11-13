@@ -137,7 +137,7 @@ namespace Span
                 var selectedIndices = new HashSet<int>();
                 foreach (var item in listView.SelectedItems)
                 {
-                    int idx = allItems.IndexOf(item as FileSystemViewModel);
+                    int idx = item is FileSystemViewModel viewModel ? allItems.IndexOf(viewModel) : -1;
                     if (idx >= 0) selectedIndices.Add(idx);
                 }
 

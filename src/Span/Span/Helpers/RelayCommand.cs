@@ -13,7 +13,8 @@ namespace Span.Helpers
 
         public RelayCommand(Action execute) => _execute = execute ?? throw new ArgumentNullException(nameof(execute));
 
-        public event EventHandler? CanExecuteChanged;
+        // CanExecute is constant; no change notifications are raised.
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
         public bool CanExecute(object? parameter) => true;
         public void Execute(object? parameter) => _execute();
     }
@@ -25,24 +26,26 @@ namespace Span.Helpers
     public class RelayCommand<T> : ICommand
     {
         private readonly Action<T> _execute;
-        private readonly Predicate<T> _canExecute;
+        private readonly Predicate<T>? _canExecute;
 
-        public RelayCommand(Action<T> execute, Predicate<T> canExecute = null)
+        public RelayCommand(Action<T> execute, Predicate<T>? canExecute = null)
         {
             _execute = execute ?? throw new ArgumentNullException(nameof(execute));
             _canExecute = canExecute;
         }
 
-        public event EventHandler CanExecuteChanged;
+        public event EventHandler? CanExecuteChanged;
 
-        public bool CanExecute(object parameter)
+        public bool CanExecute(object? parameter)
         {
-            return _canExecute == null || _canExecute((T)parameter);
+            if (parameter is T value) return _canExecute == null || _canExecute(value);
+            return parameter is null && default(T) is null && (_canExecute == null || _canExecute(default!));
         }
 
-        public void Execute(object parameter)
+        public void Execute(object? parameter)
         {
-            _execute((T)parameter);
+            if (parameter is T value) _execute(value);
+            else if (parameter is null && default(T) is null) _execute(default!);
         }
 
         public void RaiseCanExecuteChanged()

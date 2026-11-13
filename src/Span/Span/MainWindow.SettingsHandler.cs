@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.Extensions.DependencyInjection;
@@ -1309,8 +1309,7 @@ namespace Span
                 ViewModel.ShowToast(_loc.Get("Error_PathNotExist") ?? "Path does not exist");
                 return;
             }
-            var shellService = App.Current.Services.GetRequiredService<Services.ShellService>();
-            shellService.OpenTerminal(path, _settings.DefaultTerminal);
+            OpenTerminalPane(path);
         }
 
         /// <summary>

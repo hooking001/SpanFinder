@@ -291,7 +291,7 @@ namespace Span.ViewModels
         /// 좌상단 점(ShowTagDot)으로 표시한다.
         /// </summary>
         public override Microsoft.UI.Xaml.Media.Brush IconBrush
-            => HasTag && !HasCustomIcon ? TagBrush : Services.IconService.Current?.FolderBrush;
+            => HasTag && !HasCustomIcon ? TagBrush : Services.IconService.Current?.FolderBrush ?? base.IconBrush;
 
         private bool _customIconRequested;
 
@@ -665,7 +665,7 @@ namespace Span.ViewModels
             {
                 var router = App.Current.Services.GetRequiredService<FileSystemRouter>();
                 var provider = router.GetProvider(archivePath);
-                Helpers.DebugLogger.Log($"[LoadFromArchiveAsync] path='{archivePath}', provider={provider?.GetType().Name ?? "null"}");
+                Helpers.DebugLogger.Log($"[LoadFromArchiveAsync] path='{archivePath}', provider={provider.GetType().Name ?? "null"}");
                 var archiveItems = await provider.GetItemsAsync(archivePath, token);
                 Helpers.DebugLogger.Log($"[LoadFromArchiveAsync] Got {archiveItems.Count} items from provider");
 
@@ -1249,7 +1249,7 @@ namespace Span.ViewModels
                 }
                 else
                 {
-                    Helpers.DebugLogger.Log($"[Git.Warm] Cache warmed with {states.Count} entries, injection deferred to ContainerContentChanging");
+                    Helpers.DebugLogger.Log($"[Git.Warm] Cache warmed with {states?.Count ?? 0} entries, injection deferred to ContainerContentChanging");
                 }
             }
             catch (OperationCanceledException) { Helpers.DebugLogger.Log("[Git.Warm] Cancelled"); }
@@ -1482,7 +1482,9 @@ namespace Span.ViewModels
             // PropertyChanged를 발생시키지 않고 필드 직접 교체.
             // Cleanup 중 x:Bind가 이미 visual tree에서 제거된 ListView의 ItemsSource를
             // 업데이트하려다 COMException(0x80070490) 발생하는 것을 방지.
+#pragma warning disable MVVMTK0034 // Cleanup must not notify bindings in a removed visual tree.
             _children = new System.Collections.ObjectModel.ObservableCollection<FileSystemViewModel>();
+#pragma warning restore MVVMTK0034
             _allChildren = null;
             _currentFilterText = string.Empty;
             _isLoaded = false;

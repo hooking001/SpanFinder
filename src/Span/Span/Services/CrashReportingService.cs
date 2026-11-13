@@ -482,7 +482,7 @@ public sealed class CrashReportingService : IDisposable
     {
         // 서버명/유저명 제거
         evt.ServerName = null;
-        evt.User = null;
+        evt.User = new Sentry.SentryUser();
 
         // Exception 메시지에 경로가 포함될 수 있으므로 스크러빙된 버전을 Extra에 추가
         if (evt.Exception != null)

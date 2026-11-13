@@ -2135,7 +2135,7 @@ namespace Span
             }
 
             var tabs = ViewModel.CollectCurrentTabStates();
-            var activeIndex = ViewModel.Tabs.IndexOf(ViewModel.ActiveTab);
+            var activeIndex = ViewModel.ActiveTabIndex;
 
             var workspace = new WorkspaceDto(
                 Id: id,

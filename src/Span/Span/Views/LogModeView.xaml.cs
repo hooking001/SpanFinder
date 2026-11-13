@@ -22,10 +22,6 @@ public sealed partial class LogModeView : UserControl
     private LocalizationService? _loc;
     private Grid? _selectedNavItem;
 
-    /// <summary>
-    /// 뒤로가기 요청 이벤트 (MainWindow에서 구독)
-    /// </summary>
-    public event EventHandler? BackRequested;
 
     public LogModeView()
     {

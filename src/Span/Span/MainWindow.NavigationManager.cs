@@ -291,8 +291,9 @@ namespace Span
         /// </summary>
         /// <param name="disableAnimation">true면 애니메이션 없이 즉시 점프 (v1.4.19: 형제 폴더
         /// Replace 사이클에서 위치 보정 시 사용).</param>
-        private void ScrollToLastColumn(ExplorerViewModel explorer, ScrollViewer scrollViewer, bool disableAnimation = false)
+        private void ScrollToLastColumn(ExplorerViewModel? explorer, ScrollViewer scrollViewer, bool disableAnimation = false)
         {
+            if (explorer == null) return;
             var columns = explorer.Columns;
             if (columns.Count == 0) return;
 

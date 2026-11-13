@@ -383,7 +383,7 @@ namespace Span
                     }
 
                     var crashSvc = Services.GetRequiredService<Services.CrashReportingService>();
-                    crashSvc.CaptureException(e.Exception, "UI.UnhandledException", extras);
+                    crashSvc.CaptureException(e.Exception ?? new InvalidOperationException(e.Message), "UI.UnhandledException", extras);
                 }
                 catch { }
             }
@@ -441,6 +441,7 @@ namespace Span
                 return;
             }
 
+            if (e.Exception == null) { e.SetObserved(); return; }
             Helpers.DebugLogger.LogCrash("Task.UnobservedException", e.Exception);
             try { Services.GetRequiredService<Services.CrashReportingService>().CaptureException(e.Exception, "Task.UnobservedException"); }
             catch { Span.Services.CrashReportingService.CaptureFatalException(e.Exception, "Task.UnobservedException"); }
@@ -630,7 +631,7 @@ namespace Span
             }
         }
 
-        private Window m_window;
+        private Window? m_window;
 
         /// <summary>
         /// Jump List (or other) startup arguments passed via activation.

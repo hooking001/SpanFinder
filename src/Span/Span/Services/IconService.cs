@@ -73,7 +73,7 @@ namespace Span.Services
         public string RecycleBinEmptyGlyph { get; private set; } = "\uEC2A"; // ri-delete-bin-line
         public string RecycleBinFullGlyph { get; private set; } = "\uEC29"; // ri-delete-bin-fill
 
-        public static IconService Current { get; private set; }
+        public static IconService? Current { get; private set; }
 
         public IconService()
         {

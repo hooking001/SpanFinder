@@ -110,14 +110,14 @@ namespace Span.ViewModels
         [ObservableProperty]
         private Models.CloudState _cloudState = Models.CloudState.None;
 
-        partial void OnCloudStateChanged(Models.CloudState oldValue, Models.CloudState value)
+        partial void OnCloudStateChanged(Models.CloudState oldValue, Models.CloudState newValue)
         {
-            var newGlyph = Services.CloudSyncService.GetCloudStateGlyph(value);
+            var newGlyph = Services.CloudSyncService.GetCloudStateGlyph(newValue);
             if (CloudStateGlyph != newGlyph)
                 CloudStateGlyph = newGlyph;
             // HasCloudBadge/CloudBadgeBrush 알림은 실제 뱃지 표시 여부가 변경될 때만 발생
             bool wasBadge = oldValue != Models.CloudState.None;
-            bool isBadge = value != Models.CloudState.None;
+            bool isBadge = newValue != Models.CloudState.None;
             if (wasBadge != isBadge)
                 OnPropertyChanged(nameof(HasCloudBadge));
             if (wasBadge || isBadge) // 뱃지가 있었거나 있을 때만 브러시 알림
@@ -154,10 +154,10 @@ namespace Span.ViewModels
         [ObservableProperty]
         private Models.FolderTagColor _tagColor = Models.FolderTagColor.None;
 
-        partial void OnTagColorChanged(Models.FolderTagColor oldValue, Models.FolderTagColor value)
+        partial void OnTagColorChanged(Models.FolderTagColor oldValue, Models.FolderTagColor newValue)
         {
             bool wasVisible = oldValue != Models.FolderTagColor.None;
-            bool isVisible = value != Models.FolderTagColor.None;
+            bool isVisible = newValue != Models.FolderTagColor.None;
             if (wasVisible != isVisible)
             {
                 OnPropertyChanged(nameof(HasTag));
@@ -219,10 +219,10 @@ namespace Span.ViewModels
         [ObservableProperty]
         private Models.GitFileState _gitState = Models.GitFileState.None;
 
-        partial void OnGitStateChanged(Models.GitFileState oldValue, Models.GitFileState value)
+        partial void OnGitStateChanged(Models.GitFileState oldValue, Models.GitFileState newValue)
         {
             bool wasBadge = oldValue != Models.GitFileState.None && oldValue != Models.GitFileState.Clean;
-            bool isBadge = value != Models.GitFileState.None && value != Models.GitFileState.Clean;
+            bool isBadge = newValue != Models.GitFileState.None && newValue != Models.GitFileState.Clean;
             // 뱃지 표시 여부가 변경될 때만 HasGitBadge 알림
             if (wasBadge != isBadge)
                 OnPropertyChanged(nameof(HasGitBadge));

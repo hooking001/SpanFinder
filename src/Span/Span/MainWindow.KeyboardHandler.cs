@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Windowing;
@@ -83,6 +83,9 @@ namespace Span
         private async void OnGlobalKeyDown(object sender, KeyRoutedEventArgs e)
         {
             // 키 녹화 모드에서는 글로벌 핸들러 억제 (단축키 설정 UI에서 새 바인딩 녹화 중)
+            if (TerminalPaneHost.Visibility == Visibility.Visible &&
+                Microsoft.UI.Xaml.Input.FocusManager.GetFocusedElement(TerminalPaneHost.XamlRoot) is DependencyObject focusedTerminal &&
+                IsDescendant(TerminalPaneHost, focusedTerminal)) return;
             if (_isRecordingShortcut) return;
 
             // ContentDialog 열려 있으면 글로벌 단축키 억제 (삭제 확인 등 다이얼로그 내 키보드 동작 보장)
@@ -391,7 +394,7 @@ namespace Span
                         // Ctrl+Tab / Ctrl+Shift+Tab: 탭 순환 (브라우저/탐색기 표준)
                         if (ViewModel.Tabs.Count > 1)
                         {
-                            int currentIndex = ViewModel.Tabs.IndexOf(ViewModel.ActiveTab);
+                            int currentIndex = ViewModel.ActiveTabIndex;
                             int nextIndex = shift
                                 ? (currentIndex - 1 + ViewModel.Tabs.Count) % ViewModel.Tabs.Count
                                 : (currentIndex + 1) % ViewModel.Tabs.Count;
@@ -1866,6 +1869,9 @@ namespace Span
             {
                 switch (action)
                 {
+                    case "openTerminal":
+                        OpenTerminalPane(System.IO.Directory.Exists(path) ? path : System.IO.Path.GetDirectoryName(path) ?? string.Empty);
+                        break;
                     case "extractHere":
                         ((Services.IContextMenuHost)this).PerformExtractHere(path);
                         break;
@@ -2304,7 +2310,7 @@ namespace Span
         private void ExecuteNextTab(bool forward)
         {
             if (ViewModel.Tabs.Count <= 1) return;
-            int currentIndex = ViewModel.Tabs.IndexOf(ViewModel.ActiveTab);
+            int currentIndex = ViewModel.ActiveTabIndex;
             int nextIndex = forward
                 ? (currentIndex + 1) % ViewModel.Tabs.Count
                 : (currentIndex - 1 + ViewModel.Tabs.Count) % ViewModel.Tabs.Count;

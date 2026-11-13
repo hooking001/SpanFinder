@@ -355,7 +355,7 @@ namespace Span.Helpers
             // Ignore PointerCaptureLost from other elements (ListViewItem drag cancellation, etc.)
             if (_state == State.Active)
             {
-                if (e.OriginalSource != _overlayCanvas)
+                if (!ReferenceEquals(e.OriginalSource, _overlayCanvas))
                 {
                     DebugLogger.Log($"[RubberBand] PointerCaptureLost: source is not overlay canvas, ignoring");
                     return;

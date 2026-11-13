@@ -59,9 +59,9 @@ namespace Span.ViewModels
         /// 설정/작업 로그 화면에서는 Shelf 가 콘텐츠를 가리지 않도록 자동 숨김.
         /// 상태(_isShelfVisible/ShelfItems)는 그대로 유지되어 모드 복귀 시 다시 나타남.</summary>
         public Microsoft.UI.Xaml.Visibility IsShelfPanelVisible
-            => (_isShelfVisible || _isShelfDragHover || ShelfItems.Count > 0)
-               && _currentViewMode != ViewMode.Settings
-               && _currentViewMode != ViewMode.ActionLog
+            => (IsShelfVisible || IsShelfDragHover || ShelfItems.Count > 0)
+               && CurrentViewMode != ViewMode.Settings
+               && CurrentViewMode != ViewMode.ActionLog
                 ? Microsoft.UI.Xaml.Visibility.Visible
                 : Microsoft.UI.Xaml.Visibility.Collapsed;
 
@@ -100,7 +100,7 @@ namespace Span.ViewModels
         public bool HasNetworkDrives => NetworkAndRemoteDrives.Count > 0;
 
         // Engine — Split View (Dual-Pane)
-        private ExplorerViewModel _leftExplorer;
+        private ExplorerViewModel _leftExplorer = null!; // Assigned by Initialize via the property setter.
         public ExplorerViewModel LeftExplorer
         {
             get => _leftExplorer;
@@ -119,7 +119,7 @@ namespace Span.ViewModels
             }
         }
 
-        private ExplorerViewModel _rightExplorer;
+        private ExplorerViewModel _rightExplorer = null!; // Assigned by Initialize via the property setter.
         public ExplorerViewModel RightExplorer
         {
             get => _rightExplorer;
@@ -573,9 +573,12 @@ namespace Span.ViewModels
             try
             {
                 var settings = App.Current.Services.GetRequiredService<SettingsService>();
+                // Initialization must not write restored values back through property hooks.
+#pragma warning disable MVVMTK0034
                 _isLocalDrivesExpanded = settings.Get("SidebarLocalExpanded", true);
                 _isCloudDrivesExpanded = settings.Get("SidebarCloudExpanded", true);
                 _isNetworkDrivesExpanded = settings.Get("SidebarNetworkExpanded", true);
+#pragma warning restore MVVMTK0034
             }
             catch (Exception ex) { Helpers.DebugLogger.Log($"[MainViewModel] Sidebar expand state load failed: {ex.Message}"); }
 

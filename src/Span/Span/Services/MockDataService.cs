@@ -22,6 +22,7 @@ namespace Span.Services
             return _root;
         }
 
+        [System.Diagnostics.CodeAnalysis.MemberNotNull(nameof(_root))]
         private void InitializeData()
         {
             // Root (Virtual)
